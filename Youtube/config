@@ -1,0 +1,27 @@
+# my config file for youtube-dl
+
+# rate limit
+--limit-rate 500k
+
+# copy all the misc stuff
+--write-annotations
+--write-info-json
+--write-description
+--add-metadata
+--write-thumbnail
+
+# sub info
+--write-sub
+--all-sub
+--convert-subs srt
+
+--restrict-filenames
+
+# ignore errors in case a video went away or made private
+-i
+
+# Adjust to your liking on how to name the output files
+--output '<<<PathToYoutubeVideos>>>/%(uploader)s/%(upload_date)s - %(title)s - (%(resolution)s)_[%(id)s].%(ext)s'
+
+# Keep an archive list so we don't try and download videos twice
+--download-archive '<<<PathToYoutubeVideos>>>/archive_list.txt'
