@@ -47,7 +47,7 @@ do
 	smartctl -A -i -v 7,hex48 /dev/"$drive" | \
         awk -v device="$drive" -v tempWarn="$tempWarn" -v tempCrit="$tempCrit" -v sectorsCrit="$sectorsCrit" \
         -v testAgeWarn="$testAgeWarn" -v warnSymbol="$warnSymbol" -v critSymbol="$critSymbol" \
-        -v lastTestHours="$(smartctl -l selftest /dev/"$drive" | grep "# 1" | awk '{print $9}')" '\
+        -v lastTestHours="$(smartctl -l selftest /dev/"$drive" | grep "^# 1" | awk '{print $9}')" '\
         /Serial Number:/{serial=$3} \
         /Temperature_Celsius/{temp=$10} \
         /Power_On_Hours/{onHours=$10} \
@@ -98,7 +98,7 @@ do
         echo ""
         echo "########## SMART status report for ${drive} drive (${brand}: ${serial}) ##########"
         smartctl -H -A -l error /dev/"$drive"
-        smartctl -l selftest /dev/"$drive" | grep "# 1 \|Num" | cut -c6-
+        smartctl -l selftest /dev/"$drive" | grep "^# 1 \|Num" | cut -c6-
         echo ""
         echo ""
     ) >> "$logfile"
