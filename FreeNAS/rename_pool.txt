@@ -1,0 +1,6 @@
+# Steps to rename a pool from A to B
+sudo zpool export A
+sudo zpool import A B
+sudo zpool export B
+# Detatch Volume A in GUI
+# Import Volume from GUI
