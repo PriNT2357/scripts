@@ -79,14 +79,14 @@ do
             }
             if (hiFlyWr == "") hiFlyWr="N/A";
             if (cmdTimeout == "") cmdTimeout="N/A";
-            printf "|%-6s|%-15s| %s |%5s|%5s|%5s|%7s|%7s|%8s|%6s|%6s|%6s|%6s|%7s|%4s|\n",
+            printf "|%-6s|%-19s| %s |%5s|%5s|%5s|%7s|%7s|%8s|%6s|%6s|%6s|%6s|%7s|%4s|\n",
             device, serial, temp, onHours, startStop, spinRetry, reAlloc, pending, offlineUnc, \
             crcErrors, mzErrors, seekErrors, hiFlyWr, cmdTimeout, testAge;
         }'
     ) >> "$logfile"
 done
 (
-    echo "+------+---------------+----+-----+-----+-----+-------+-------+--------+------+------+------+------+-------+----+"
+    echo "+------+-------------------+----+-----+-----+-----+-------+-------+--------+------+------+------+------+-------+----+"
     echo ""
     echo ""
 ) >> "$logfile"
