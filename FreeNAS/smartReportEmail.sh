@@ -9,7 +9,6 @@
 logfile="/tmp/smart_report.tmp"
 email="<<<YourEmailHere>>>"
 subject="$(hostname) - SMART Status Report"
-boundary="bv6780aw45hkgzf690w34a"
 drives="$(smartctl --scan | grep "da" | awk '{print $1}')"
 tempWarn=40
 tempCrit=45
@@ -22,14 +21,12 @@ critSymbol="!"
 (
     echo "To: ${email}"
     echo "Subject: ${subject}"
+    echo "Content-Type: text/html"
     echo "MIME-Version: 1.0"
-    echo "Content-Type: multipart/mixed; boundary=${boundary}"
     echo -e "\r\n"
 ) > "$logfile"
 
 ### Set email body ###
-echo "--${boundary}" >> "$logfile"
-echo "Content-Type: text/html" >> "$logfile"
 echo "<pre style=\"font-size:14px\">" >> "$logfile"
 
 ###### summary ######
@@ -37,11 +34,11 @@ echo "<pre style=\"font-size:14px\">" >> "$logfile"
     echo ""
     echo "########## SMART status report summary for all drives ##########"
     echo ""
-    echo "+------+-------------------+----+-----+-----+-----+-------+-------+--------+------+------+------+------+-------+----+"
-    echo "|Device|Serial             |Temp|Power|Start|Spin |ReAlloc|Current|Offline |UDMA  |Multi |Seek  |High  |Command|Last|"
-    echo "|      |                   |    |On   |Stop |Retry|Sectors|Pending|Uncorrec|CRC   |Zone  |Errors|Fly   |Timeout|Test|"
-    echo "|      |                   |    |Hours|Count|Count|       |Sectors|Sectors |Errors|Errors|      |Writes|Count  |Age |"
-    echo "+------+-------------------+----+-----+-----+-----+-------+-------+--------+------+------+------+------+-------+----+"
+    echo "+------+---------------+----+-----+-----+-----+-------+-------+--------+------+------+------+------+-------+----+"
+    echo "|Device|Serial         |Temp|Power|Start|Spin |ReAlloc|Current|Offline |UDMA  |Multi |Seek  |High  |Command|Last|"
+    echo "|      |               |    |On   |Stop |Retry|Sectors|Pending|Uncorrec|CRC   |Zone  |Errors|Fly   |Timeout|Test|"
+    echo "|      |               |    |Hours|Count|Count|       |Sectors|Sectors |Errors|Errors|      |Writes|Count  |Age |"
+    echo "+------+---------------+----+-----+-----+-----+-------+-------+--------+------+------+------+------+-------+----+"
 ) >> "$logfile"
 for ldrive in $drives
 do
@@ -112,9 +109,7 @@ sed -i '' -e '/=== START OF READ/d' "$logfile"
 sed -i '' -e '/SMART Attributes Data/d' "$logfile"
 sed -i '' -e '/Vendor Specific SMART/d' "$logfile"
 sed -i '' -e '/SMART Error Log Version/d' "$logfile"
-
 echo "</pre>" >> "$logfile"
-echo "--${boundary}--" >> "$logfile"
 
 ### Send report ###
 sendmail -t < "$logfile"
