@@ -25,3 +25,6 @@
 
 # Keep an archive list so we don't try and download videos twice
 --download-archive '<<<PathToYoutubeVideos>>>/archive_list.txt'
+
+# External file with list of channels to keep checking for new content
+# --batch-file 'youtubedl.list'
