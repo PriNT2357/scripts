@@ -1,0 +1,12 @@
+Tested on TrueNAS-12.0-U3.1
+
+To reduce the navigation menu size, change the css located at /usr/local/www/webui/styles.*.css
+
+1. Create a backup of the file
+
+2. Comment out the height element in this section
+     .sidebar-panel .mat-nav-list a{position:relative;display:flex;flex-direction:row;align-items:center;height:48px;pa
+dding:0 16px 0 0;z-index:99}
+   so that it reads
+     .sidebar-panel .mat-nav-list a{position:relative;display:flex;flex-direction:row;align-items:center;/*height:48px;*/pa
+dding:0 16px 0 0;z-index:99}
