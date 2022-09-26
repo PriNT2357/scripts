@@ -1,0 +1,13 @@
+sudo apt-get update -y && sudo apt-get upgrade -y
+sudo apt-get install sshfs -y
+
+# if docker not installed already:
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+
+# install docker-compose
+# assumes that docker was chosen during initial install
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+sudo curl -L https://raw.githubusercontent.com/docker/compose/v2.6.0/contrib/completion/bash/docker-compose -o /etc/bash_completion.d/docker-compose
