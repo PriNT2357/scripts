@@ -79,13 +79,15 @@ fi
 
 boundary="gc0p4Jq0M2Yt08jU534c0p"
 if [ "$includeSSD" == "true" ]; then
-    drives=$(for drive in $(sysctl -n kern.disks); do
+    #drives=$(for drive in $(sysctl -n kern.disks); do
+    drives=$(for drive in $(sysctl -n kern.disks | sed 's/ada/\n1./g' | sed 's/da/\n2./g' | sort -t '.' -r -k 2,2 -V | sed 's/1\./ada/' | sed 's/2\./da/'); do
         if [ "$(smartctl -i /dev/"${drive}" | grep "SMART support is: Enabled")" ]; then
             printf "%s " "${drive}"
         fi
     done | awk '{for (i=NF; i!=0 ; i--) print $i }')
 else
-    drives=$(for drive in $(sysctl -n kern.disks); do
+    #drives=$(for drive in $(sysctl -n kern.disks); do
+    drives=$(for drive in $(sysctl -n kern.disks | sed 's/ada/\n1./g' | sed 's/da/\n2./g' | sort -t '.' -r -k 2,2 -V | sed 's/1\./ada/' | sed 's/2\./da/'); do
         if [ "$(smartctl -i /dev/"${drive}" | grep "SMART support is: Enabled")" ] && ! [ "$(smartctl -i /dev/"${drive}" | grep "Solid State Device")" ]; then
             printf "%s " "${drive}"
         fi
