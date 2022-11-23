@@ -2,9 +2,10 @@
 
 ### https://www.ixsystems.com/community/resources/solnet-array-test.1/
 ### ftp://ftp.sol.net/incoming/solnet-array-test-v2.sh
+### https://www.truenas.com/community/threads/solnet-array-test-discussion-thread.57317/page-2
 
 #/*-
-# * Copyright (c) 2000-2016 sol.net Network Services
+# * Copyright (c) 2000-2020 sol.net Network Services
 # * All rights reserved.
 # *
 # * Redistribution and use in source and binary forms, with or without
@@ -55,7 +56,7 @@ samplediskspeed() {
 }
 
 getdisksize() {
-	disksize=`egrep "^${1}:.* byte sectors.*" < /var/run/dmesg.boot | head -1 | sed -n 's/^[a-z0-9]*: \([0-9]*\)MB .*$/\1/p'`
+	disksize=`(cat /var/run/dmesg.boot; dmesg) | egrep "^${1}:.* byte sectors.*" | tail -1 | sed -n 's/^[a-z0-9]*: \([0-9]*\)MB .*$/\1/p'`
 
 	if [ -z "${disksize}" ]; then
 		disksize=0
