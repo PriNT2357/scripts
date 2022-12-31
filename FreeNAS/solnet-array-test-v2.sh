@@ -57,7 +57,7 @@ samplediskspeed() {
 
 getdisksize() {
 	disksize=`(cat /var/run/dmesg.boot; dmesg) | egrep "^${1}:.* byte sectors.*" | tail -1 | sed -n 's/^[a-z0-9]*: \([0-9]*\)MB .*$/\1/p'`
-    disksize=`geom disk list ${1} | grep Mediasize | awk '{print $2}'`
+    disksize=`units -t "$(geom disk list ${1} | grep Mediasize | awk '{print $2}') bytes" megabytes`
 
 	if [ -z "${disksize}" ]; then
 		disksize=0
