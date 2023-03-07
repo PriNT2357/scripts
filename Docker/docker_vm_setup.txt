@@ -41,12 +41,13 @@ On FreeNAS
         - 'media/movies'
         - 'media/tv'
         - 'media/youtube'
-    Create config folder for each docker image (an empty hidden dir is created since nfs won't mount path unless it has something in it)
-        for i in heimdall jellyfin plex lidarr radarr sonarr sonarr_anime sabnzbd tautulli influxdb grafana nextcloud
-        do
-        mkdir -p /mnt/<<pool name>>/docker/configs/${i}/.empty
-        chown -R $(whoami):$(whoami) /mnt/<<pool name>>/docker/configs/${i}
-        done
+##   Note: configs usually have databases which do not like being mounted via nfs. Moved configs to local docker server
+#    Create config folder for each docker image (an empty hidden dir is created since nfs won't mount path unless it has something in it)
+#        for i in heimdall jellyfin plex lidarr radarr sonarr sonarr_anime sabnzbd tautulli influxdb grafana nextcloud
+#        do
+#        mkdir -p /mnt/<<pool name>>/docker/configs/${i}/.empty
+#        chown -R $(whoami):$(whoami) /mnt/<<pool name>>/docker/configs/${i}
+#        done
     Create data folders as needed
         for i in nzbs nextcloud influxdb
         do
@@ -59,7 +60,7 @@ On FreeNAS
         done
     In GUI, change dataset ownership to $(whoami):$(whoami), applying recursively
     In GUI, create NFS shares
-        /mnt/<<pool name>>/docker/{configs,data}
+        /mnt/<<pool name>>/docker/{data}
             - set All dirs to Yes
             - maproot user:group to $(whoami):$(whoami)
         /mnt/<<pool name>>/media/{anime,music,movies,tv,youtube}
@@ -71,6 +72,8 @@ On Docker (before running docker compose)
     #sudo apt-get install docker-common
     mkdir -p /home/$(whoami)/downloads/complete/{anime,music,movies,tv}
     mkdir -p /home/$(whoami)/downloads/incomplete/
+    mkdir -p /home/$(whoami)/docker/data/{grafana,influxdb,urbackup}_data
+    mkdir -p /home/$(whoami)/docker/configs/{grafana,heimdall,influxdb,jellyfin,lidarr,nextcloud,plex,qbitorrent,radarr,sabnzbd,sonarr,sonarr_anime,tautulli}
 
 
 ==============================================================
