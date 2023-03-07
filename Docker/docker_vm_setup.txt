@@ -5,9 +5,147 @@ sudo apt-get install sshfs -y
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
+# install docker-compose (this is done with the convenience script above)
 
-# install docker-compose
-# assumes that docker was chosen during initial install
-sudo curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-sudo curl -L https://raw.githubusercontent.com/docker/compose/v2.6.0/contrib/completion/bash/docker-compose -o /etc/bash_completion.d/docker-compose
+# setup some useful aliases
+echo "alias dps='docker ps --format \"{{.Names}}\" | sort'" >> ~/.bash_aliases
+
+# add user to docker group to permit running docker without sudo
+sudo usermod -aG docker $(whoami)
+
+# ssh key setup
+ssh-keygen -t rsa -b 4096 -C "$(whoami)@$(hostname --fqdn)"
+
+# if comment needs to be changed, use the following
+#ssh-keygen -f ~/.ssh/id_rsa -c -C "new comment"
+
+# push public key to other servers
+#ssh-copy-id [[TARGET IP OR HOST]]
+
+
+
+==============================================================
+Additional steps required to configure docker images
+
+
+If a data directory cannot be separated from a config directory then only a config directory will be created
+
+==============================================================
+
+On FreeNAS
+    Create datasets:
+        - 'docker/configs'
+        - 'docker/data'
+        - 'media/anime'
+        - 'media/music'
+        - 'media/movies'
+        - 'media/tv'
+        - 'media/youtube'
+    Create config folder for each docker image (an empty hidden dir is created since nfs won't mount path unless it has something in it)
+        for i in heimdall jellyfin plex lidarr radarr sonarr sonarr_anime sabnzbd tautulli influxdb grafana nextcloud
+        do
+        mkdir -p /mnt/<<pool name>>/docker/configs/${i}/.empty
+        chown -R $(whoami):$(whoami) /mnt/<<pool name>>/docker/configs/${i}
+        done
+    Create data folders as needed
+        for i in nzbs nextcloud influxdb
+        do
+        mkdir -p /mnt/<<pool name>>/docker/data/${i}/.empty
+        done
+    Create folder for each media folder (an empty hidden dir is created since nfs won't mount path unless it has something in it)
+        for i in anime music movies tv youtube
+        do
+        mkdir -p /mnt/<<pool name>>/media/${i}/.empty
+        done
+    In GUI, change dataset ownership to $(whoami):$(whoami), applying recursively
+    In GUI, create NFS shares
+        /mnt/<<pool name>>/docker/{configs,data}
+            - set All dirs to Yes
+            - maproot user:group to $(whoami):$(whoami)
+        /mnt/<<pool name>>/media/{anime,music,movies,tv,youtube}
+            - maproot user:group to $(whoami):$(whoami)
+
+==============================================================
+
+On Docker (before running docker compose)
+    #sudo apt-get install docker-common
+    mkdir -p /home/$(whoami)/downloads/complete/{anime,music,movies,tv}
+    mkdir -p /home/$(whoami)/downloads/incomplete/
+
+
+==============================================================
+
+#On Docker (after running docker compose)
+#    jellyfin:
+#        # allows cache and metadata folders to be on local machine
+#        sudo docker exec -it jellyfin /bin/bash
+#        chown abc:abc /data/cache
+#        chown abc:abc /data/metadata
+#        # change cache path in web interface to /data/cache
+#        # change metadata path in web interface to /data/cache
+
+==============================================================
+Migrating data to a new server
+==============================================================
+
+Send a snapshot to another server on a specific interface (sm10gbe)
+
+    sudo zfs send boh/Media/Music@relocate-2020-11-21_01-56 | mbuffer -q -s 128k -m 1G | pv -b | nc -w 20 sm10gbe 8023
+
+Receive snapshot from another server
+
+    nc -w 20 -l 8023 | mbuffer -q -s 128k -m 1G | pv -rtab | zfs receive -vF lhc/media/movies
+
+==============================================================
+
+Migrating configs
+
+Plex
+    view history (https://technicalramblings.com/blog/migrating-view-history-between-two-plex-servers-avoiding-negative-unwatched-count/#part-one-merging-databases)
+        cd <<old plex path>>/Library/Application\ Support/Plex\ Media\ Server/Plug-in\ Support/Databases/
+        echo ".dump metadata_item_settings" | sqlite3 com.plexapp.plugins.library.db | grep -v TABLE | grep -v INDEX > ~/viewhistory.sql
+        cd <<new plex path>>/Library/Application\ Support/Plex\ Media\ Server/Plug-in\ Support/Databases/
+        cat ~/viewhistory.sql | sqlite3 com.plexapp.plugins.library.db
+
+
+Radarr
+    Mass update movie path
+        sqlite3 radarr.db
+        update Movies set Path = REPLACE(Path,'/movies/','/data/movies/');
+        update RootFolders set Path = '/data/movies/' where Path = '/movies/';
+        # if "Collections" or "ImportLists" exists when running ".tables"
+        update Collections set RootFolderPath = REPLACE(RootFolderPath,'/movies','/data/movies') where RootFolderPath = '/movies'
+        update ImportLists set RootFolderPath = REPLACE(RootFolderPath,'/movies','/data/movies') where RootFolderPath = '/movies'
+        
+        
+Sonarr
+    Mass update paths
+        update Series set Path = REPLACE(Path, '/mnt/Media/TV Shows', '/data/tv');
+        update RootFolders set Path = '/data/tv/';
+        
+        
+Sonar_anime
+    Mass update paths
+        update Series set Path = REPLACE(Path, '/mnt/Media/Anime', '/data/tv');
+        update RootFolders set Path = '/data/tv/';
+        
+==============================================================
+Miscellaneous Notes
+==============================================================
+
+InfluxDB Notes:
+    get primary/initial users's token
+            # generate all access token
+            sudo docker exec -it influxdb /bin/bash
+            influx -t <<all_access_token>> auth list
+            # token will be displayed here
+    backup database
+            sudo docker exec -it influxdb /bin/bash
+            influx backup -t <<primary_user_token>> /var/lib/influxdb2/backups/
+
+
+
+Grafana Notes:
+    Need to create empty/custom files/folders
+        touch ~/docker/configs/grafana/grafana.ini
+        mkdir -p docker/configs/grafana/provisioning/{datasources,plugins,notifiers,alerting,dashboards}
