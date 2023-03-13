@@ -1,0 +1,334 @@
+# :%s/remote_server_address/new_address/g
+# :%s/your_email@example.com/new_address/g
+
+version: "2.3"
+name: "docker"
+services:
+  heimdall:
+    image: linuxserver/heimdall:latest
+    container_name: heimdall
+    environment:
+      - PUID=1000 # uid on nfs server
+      - PGID=1000 # gid on nfs server
+      - TZ=America/Chicago
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/heimdall
+        target: /config
+    ports:
+      - 80:80
+#      - 443:443
+    restart: unless-stopped
+  jellyfin:
+    image: linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      #- JELLYFIN_PublishedServerUrl= #optional
+    volumes:
+      - jellyfin_cache:/data/cache # for local performance - see README
+      - jellyfin_metadata:/data/metadata # for local performance - see README
+      - type: bind
+        source: /home/$(whoami)/docker/configs/jellyfin
+        target: /config
+      - type: volume
+        source: nfs_tv
+        target: /data/tv
+        read_only: true
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_movies
+        target: /data/movies
+        read_only: true
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_music
+        target: /data/music
+        read_only: true
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_anime
+        target: /data/anime
+        read_only: true
+        volume:
+          nocopy: true
+    ports:
+      - 8096:8096
+      #- 8920:8920 #optional Https webUI (you need to set up your own certificate).
+      #- 7359:7359/udp #optional Allows clients to discover Jellyfin on the local network.
+      #- 1900:1900/udp #optional Service discovery used by DNLA and clients.
+    restart: unless-stopped
+  plex:
+    image: linuxserver/plex:latest
+    container_name: plex
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - PLEX_CLAIM= #optional
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/plex
+        target: /config
+      - type: volume
+        source: nfs_tv
+        target: /data/tv
+        read_only: true
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_movies
+        target: /data/movies
+        read_only: true
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_music
+        target: /data/music
+        read_only: true
+        volume:
+          nocopy: true
+      - type: volume
+        source: nfs_anime
+        target: /data/anime
+        read_only: true
+        volume:
+          nocopy: true
+    restart: unless-stopped
+  lidarr:
+    image: linuxserver/lidarr:latest
+    container_name: lidarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/lidarr
+        target: /config
+      - type: volume
+        source: nfs_music
+        target: /data/music
+        volume:
+          nocopy: true
+      - /home/$(whoami)/downloads/complete/music:/downloads #optional
+    ports:
+      - 8686:8686
+    restart: unless-stopped
+  radarr:
+    image: linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/radarr
+        target: /config
+      - type: volume
+        source: nfs_movies
+        target: /data/movies
+        volume:
+          nocopy: true
+      - /home/$(whoami)/downloads/complete:/downloads #optional
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/sonarr
+        target: /config
+      - type: volume
+        source: nfs_tv
+        target: /data/tv
+        volume:
+          nocopy: true
+      - /home/$(whoami)/downloads/complete:/downloads #optional
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+  sonarr_anime:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr_anime
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/sonarr_anime
+        target: /config
+      - type: volume
+        source: nfs_anime
+        target: /data/tv
+        volume:
+          nocopy: true
+      - /home/$(whoami)/downloads/complete:/downloads #optional
+    ports:
+      - 8990:8989
+    restart: unless-stopped
+  sabnzbd:
+    image: linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/sabnzbd
+        target: /config
+      - type: volume
+        source: nfs_nzbs
+        target: /nzbs
+        volume:
+          nocopy: true
+      - /home/$(whoami)/downloads/complete:/downloads #optional
+      - /home/$(whoami)/downloads/incomplete:/incomplete-downloads #optional
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+  tautulli:
+    image: linuxserver/tautulli:latest
+    container_name: tautulli
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/tautulli
+        target: /config
+    ports:
+      - 8181:8181
+    restart: unless-stopped
+  nextcloud:
+    image: linuxserver/nextcloud:22.1.0-ls148
+    container_name: nextcloud
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/nextcloud
+        target: /config
+      - type: volume
+        source: nfs_nextcloud_data
+        target: /data
+        volume:
+          nocopy: true
+    ports:
+      - 443:443
+    restart: unless-stopped
+  synclounge:
+    image: linuxserver/synclounge:latest
+    container_name: synclounge
+    environment:
+      - TZ=America/Chicago
+      #- AUTH_LIST=plexuser1,plexuser2,email1,machineid1 #optional
+      - AUTH_LIST=your_email@example.com #optional
+      - AUTOJOIN_ENABLED=false #optional
+      #- AUTOJOIN_ROOM=roomname #optional
+    ports:
+      - 8088:8088
+    restart: unless-stopped
+  influxdb:
+    image: influxdb:2.5.1
+    container_name: influxdb
+    environment:
+      - INFLUXD_REPORTING_DISABLED=true
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/influxdb
+        target: /etc/influxdb2/configs
+      - type: bind
+        source: /home/$(whoami)/docker/data/influxdb_data
+        target: /var/lib/influxdb2
+    ports:
+      - 8086:8086
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana-oss:latest
+    #image: grafana/grafana
+    container_name: grafana
+    user: '1000'
+    environment:
+      - GF_PATHS_CONFIG=/etc/grafana/grafana.ini # optional
+      #      - GF_PATHS_DATA=/var/lib/grafana # optional
+    volumes:
+      - type: bind
+        source: /home/$(whoami)/docker/configs/grafana
+        target: /etc/grafana
+      - type: bind
+        source: /home/$(whoami)/docker/data/grafana_data
+        target: /var/lib/grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+  urbackup:
+    image: uroni/urbackup-server:latest
+    container_name: urbackup
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ="America/Chicago"
+    volumes:
+      - /home/$(whoami)/docker/data/urbackup_data/database:/var/urbackup
+      - /home/$(whoami)/docker/data/urbackup_data/backups:/backups
+    network_mode: "host"
+
+volumes:
+  jellyfin_cache: {}
+  jellyfin_metadata: {}
+  nfs_nzbs:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=remote_server_address,rw,nolock
+      device: ":/mnt/lhc/docker/data/nzbs"
+  nfs_nextcloud_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=remote_server_address,rw,nolock
+      device: ":/mnt/lhc/docker/data/nextcloud"
+  nfs_tv:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=remote_server_address,rw,nolock
+      device: ":/mnt/lhc/media/tv"
+  nfs_movies:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=remote_server_address,rw,nolock
+      device: ":/mnt/lhc/media/movies"
+  nfs_music:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=remote_server_address,rw,nolock
+      device: ":/mnt/lhc/media/music"
+  nfs_anime:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=remote_server_address,rw,nolock
+      device: ":/mnt/lhc/media/anime"

@@ -1,5 +1,8 @@
+# Note, run the following to execute a single line in bash when using vi
+# :.w !bash
+
 sudo apt-get update -y && sudo apt-get upgrade -y
-sudo apt-get install sshfs -y
+sudo apt-get install sshfs nfs-common net-tools -y
 
 # if docker not installed already:
 curl -fsSL https://get.docker.com -o get-docker.sh
