@@ -4,6 +4,20 @@
 sudo apt-get update -y && sudo apt-get upgrade -y
 sudo apt-get install sshfs nfs-common net-tools -y
 
+# install and configure yt-dlp
+# https://github.com/yt-dlp/yt-dlp/wiki/Installation
+sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+sudo chmod a+rx /usr/local/bin/yt-dlp  # Make executable
+mkdir -p ~/.config/yt-dlp
+cp ~/scripts/Youtube/config ~/.config/yt-dlp/config
+# change the contents of config where noted
+
+# Add mounts by appending
+sudo mkdir /mnt/youtube
+sudo vi /etc/fstab
+<<server>>:/mnt/<<pool name>>/media/youtube /mnt/youtube nfs4 defaults 0 0
+
+
 # if docker not installed already:
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
