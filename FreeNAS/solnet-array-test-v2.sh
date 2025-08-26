@@ -56,8 +56,12 @@ samplediskspeed() {
 }
 
 getdisksize() {
-	disksize=`(cat /var/run/dmesg.boot; dmesg) | egrep "^${1}:.* byte sectors.*" | tail -1 | sed -n 's/^[a-z0-9]*: \([0-9]*\)MB .*$/\1/p'`
-    disksize=`units -t "$(geom disk list ${1} | grep Mediasize | awk '{print $2}') bytes" megabytes`
+    # Using cat will only show the first successful boot message
+    # dmesg will get the last status of the drive in case it was switched out after boot
+    # geom seems to have issues with larger drives
+	#disksize=`(cat /var/run/dmesg.boot; dmesg) | egrep "^${1}:.* byte sectors.*" | tail -1 | sed -n 's/^[a-z0-9]*: \([0-9]*\)MB .*$/\1/p'`
+    #disksize=`geom disk list ${1} | grep Mediasize | awk '{print $2}'`
+    disksize=`(dmesg) | egrep "^${1}:.* byte sectors.*" | tail -1 | sed -n 's/^[a-z0-9]*: \([0-9]*\)MB .*$/\1/p'`
 
 	if [ -z "${disksize}" ]; then
 		disksize=0
